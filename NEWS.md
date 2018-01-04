@@ -1,3 +1,4 @@
-bayesLopod 1.0.0
+bayesLopod 1.0.1
 
-This is a new release, all funtions are new
+Correct spelling of Psi across all package scripts
+Correction in priors for stanfiles with variable detection probabilities (pi)

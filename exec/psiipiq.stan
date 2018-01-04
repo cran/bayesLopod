@@ -10,7 +10,7 @@ transformed data{
 }
 
 parameters{
-  vector <lower=0, upper=1> [nSampledCells] psy_Sampled; // Probability of occupancy sampled cell
+  vector <lower=0, upper=1> [nSampledCells] psi_Sampled; // Probability of occupancy sampled cell
   vector <lower=0, upper=1> [nSampledCells] p_raw;
   ordered [3] odds;
 
@@ -37,7 +37,7 @@ transformed parameters {
 
   for (cell in 1:nSampledCells){
 
-  lLh_cell[cell] = log_mix(psy_Sampled[cell],binomial_lpmf(y[cell] | N[cell],p[cell]),
+  lLh_cell[cell] = log_mix(psi_Sampled[cell],binomial_lpmf(y[cell] | N[cell],p[cell]),
                               binomial_lpmf(y[cell] | N[cell] , q)
 
                             );
@@ -53,13 +53,11 @@ model
     target += normal_lpdf(qRate | 0,0.05);
     target += normal_lpdf(pRange | 0,0.1);
 
-
     target += normal_lpdf(pmin | 0.5, 0.25);
     target += normal_lpdf(p_raw | 1, 0.25);
-
     target += normal_lpdf(pmax | 0.5, 0.25);
 
-    target += beta_lpdf(psy_Sampled | 0.5, 0.5);
+    target += beta_lpdf(psi_Sampled | 0.5, 0.5);
 
     target += lLh_cell;
 
@@ -74,7 +72,7 @@ int<lower=0> sim_y[nSampledCells]; //Simulated Sampling
 int<lower=0> sim_true_y[nSampledCells]; //Simulated True Detections
 int<lower=0> sim_false_y[nSampledCells]; //Simulated False Detections
 
-real<lower=0, upper=1> psy; //Global Occupancy
+real<lower=0, upper=1> psi; //Global Occupancy
 real<lower=0, upper=1> cellpres_i[nSampledCells];
 real<lower=0, upper=1> pCorr[nSampledCells];
 vector <lower=0, upper=1> [nSampledCells] pp; //Probability of presence
@@ -95,15 +93,15 @@ AICc = AIC + ((2*npars*(npars+1))/(nSampledCells-npars-1));
 bAIC = log(nSampledCells) * npars - 2 * lLh;
 
 
-expRec = (psy_Sampled .* to_vector(N)) .* p  + ((1-psy_Sampled) .* to_vector(N)) * q;
+expRec = (psi_Sampled .* to_vector(N)) .* p  + ((1-psi_Sampled) .* to_vector(N)) * q;
 chi_sq = sum(((expRec - to_vector(y)) .* (expRec - to_vector(y))) ./ expRec);
 
 
 for (ncell in 1:nSampledCells ){
 
     pp[ncell] = exp(
-    log(psy_Sampled[ncell])+binomial_lpmf(y[ncell] | N[ncell],p[ncell]) -
-    log_mix(psy_Sampled[ncell],binomial_lpmf(y[ncell] | N[ncell],p[ncell]),
+    log(psi_Sampled[ncell])+binomial_lpmf(y[ncell] | N[ncell],p[ncell]) -
+    log_mix(psi_Sampled[ncell],binomial_lpmf(y[ncell] | N[ncell],p[ncell]),
                               binomial_lpmf(y[ncell] | N[ncell] , q))
                               );  // Probability of presence
 
@@ -124,7 +122,7 @@ for (ncell in 1:nSampledCells ){
 
   }
 
- psy = sum(cellpres_i)/nSampledCells;
+ psi = sum(cellpres_i)/nSampledCells;
 
 
 }

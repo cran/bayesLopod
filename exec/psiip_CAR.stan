@@ -59,8 +59,8 @@ transformed data{
 }
 
 parameters{
-  vector <lower=0, upper=1> [nSampledCells] psy_Sampled; // Probability of occupancy sampled cell
-  vector <lower=0, upper=1> [nNotSampled] psy_NotSampled; // Probability of occupancy per notSampled cell
+  vector <lower=0, upper=1> [nSampledCells] psi_Sampled; // Probability of occupancy sampled cell
+  vector <lower=0, upper=1> [nNotSampled] psi_NotSampled; // Probability of occupancy per notSampled cell
   real <lower=fmax(minP,q), upper=1> p;
   real <lower=0> tau;
   real <lower=0, upper=1> alpha;
@@ -69,17 +69,17 @@ parameters{
 
 transformed parameters {
 
-  vector <lower=0, upper=1> [n] psy_i;
+  vector <lower=0, upper=1> [n] psi_i;
   real <lower=0, upper= 1> qRate;
   vector [nSampledCells] lLh_cell;
 
-  psy_i[sampledId] = psy_Sampled;
-  psy_i[notSampledId] = psy_NotSampled;
+  psi_i[sampledId] = psi_Sampled;
+  psi_i[notSampledId] = psi_NotSampled;
   qRate = q/p;
 
  for (cell in 1:nSampledCells){
 
- lLh_cell[cell]  = log_mix(psy_Sampled[cell],binomial_lpmf(y[cell] | N[cell],p),
+ lLh_cell[cell]  = log_mix(psi_Sampled[cell],binomial_lpmf(y[cell] | N[cell],p),
                               binomial_lpmf(y[cell] | N[cell] , q)
 
                             );
@@ -97,7 +97,7 @@ model
     target += normal_lpdf(qRate | 0,0.05);
 
 
-    target += beta_lpdf(psy_i | 0.5, 0.5);
+    target += beta_lpdf(psi_i | 0.5, 0.5);
     target += gamma_lpdf(tau | 2, 2);
 
 
@@ -109,7 +109,7 @@ model
 
 
 
-   target += sparse_car_lpdf(psy_i | tau, alpha, W_sparse, D_sparse, lambda, n, W_n);
+   target += sparse_car_lpdf(psi_i | tau, alpha, W_sparse, D_sparse, lambda, n, W_n);
 
   }
 
@@ -122,7 +122,7 @@ int<lower=0> sim_true_y[nSampledCells]; //Simulated True Detections
 int<lower=0> sim_false_y[nSampledCells]; //Simulated False Detections
 int<lower=1> cell;
 
-real<lower=0, upper=1> psy; //Global Occupancy
+real<lower=0, upper=1> psi; //Global Occupancy
 real<lower=0, upper=1> cellpres_i[n];
 real<lower=0, upper=1> pCorr[nSampledCells];
 vector <lower=0, upper=1> [n] pp; //Probability of presence
@@ -143,7 +143,7 @@ AICc = AIC + ((2*npars*(npars+1))/(nSampledCells-npars-1));
 bAIC = log(nSampledCells) * npars - 2 * lLh;
 
 
-expRec = (psy_Sampled .* to_vector(N)) * p  + ((1-psy_Sampled) .* to_vector(N)) * q;
+expRec = (psi_Sampled .* to_vector(N)) * p  + ((1-psi_Sampled) .* to_vector(N)) * q;
 chi_sq = sum(((expRec - to_vector(y)) .* (expRec - to_vector(y))) ./ expRec);
 
 
@@ -151,8 +151,8 @@ for (ncell in 1:nSampledCells ){
 
     cell = sampledId[ncell];
     pp[cell] = exp(
-    log(psy_i[cell])+binomial_lpmf(y[ncell] | N[ncell],p) -
-    log_mix(psy_i[cell],binomial_lpmf(y[ncell] | N[ncell],p),
+    log(psi_i[cell])+binomial_lpmf(y[ncell] | N[ncell],p) -
+    log_mix(psi_i[cell],binomial_lpmf(y[ncell] | N[ncell],p),
                               binomial_lpmf(y[ncell] | N[ncell] , q))
                               );  // Probability of presence
 
@@ -173,7 +173,7 @@ for (ncell in 1:nSampledCells ){
 
   }
 
- pp[notSampledId] = psy_i[notSampledId];
+ pp[notSampledId] = psi_i[notSampledId];
 
  for (ncell in 1:nNotSampled){
    cell = notSampledId[ncell];
@@ -181,7 +181,7 @@ for (ncell in 1:nSampledCells ){
 
  }
 
- psy = sum(cellpres_i)/n;
+ psi = sum(cellpres_i)/n;
 
 
 }
